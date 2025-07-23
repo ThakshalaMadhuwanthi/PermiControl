@@ -14,11 +14,15 @@ def create_group(groupname):
 
 def delete_group(groupname):
     try:
-        subprocess.run(['sudo', 'groupdel', groupname], check=True)
-        logging.info(f"Group '{groupname}' deleted successfully.")
-    except subprocess.CalledProcessError as e:
-        logging.error(f"Failed to delete group '{groupname}': {e}")
+        grp.getgrnam(groupname)  # Will raise KeyError if group doesn't exist
+    except KeyError:
+        return f"Group '{groupname}' does not exist."
 
+    try:
+        subprocess.run(['sudo', 'groupdel', groupname], check=True)
+        return f"Group '{groupname}' deleted successfully."
+    except subprocess.CalledProcessError as e:
+        return f"Failed to delete group '{groupname}': {e}"
 def add_user_to_group(username, groupname):
     try:
         subprocess.run(['sudo', 'usermod', '-aG', groupname, username], check=True)
