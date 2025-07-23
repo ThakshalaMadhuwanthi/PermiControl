@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 def add_user(username):
     try:
-        subprocess.run(['sudo', 'useradd', username], check=True)
+        subprocess.run(['sudo', 'useradd','-m', username], check=True)
         logger.info(f"User '{username}' added successfully.")
         return f"User '{username}' added successfully."
     except subprocess.CalledProcessError as e:
