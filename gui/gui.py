@@ -150,15 +150,23 @@ root = tk.Tk()
 root.title("PermiControl - User, Group & Permission Manager")
 root.geometry("600x600")
 
+
 def toggle_dark_mode():
-    bg = "#2e2e2e" if root["bg"] != "#2e2e2e" else "SystemButtonFace"
-    fg = "white" if bg == "#2e2e2e" else "black"
+    current_bg = root.cget("bg")
+    dark_bg = "#2e2e2e"
+    light_bg = "lightgrey"  # Cross-platform safe alternative
+    bg = dark_bg if current_bg != dark_bg else light_bg
+    fg = "white" if bg == dark_bg else "black"
+    
     root.configure(bg=bg)
+
     for child in root.winfo_children():
         try:
             child.configure(bg=bg, fg=fg)
         except:
             pass
+
+
 
 dark_mode_button = tk.Button(root, text="🌗 Toggle Dark Mode", command=toggle_dark_mode)
 dark_mode_button.pack(pady=5)
