@@ -1,7 +1,8 @@
 import tkinter as tk
-from tkinter import ttk, messagebox
-from tkinter.ttk import Combobox
+from tkinter import messagebox
+from tkinter.ttk import Combobox, Notebook, Frame
 import os
+import subprocess
 
 from utils.user_utils import add_user, delete_user, modify_user
 from utils.group_utils import create_group, delete_group, add_user_to_group
@@ -45,6 +46,33 @@ def on_modify_user():
         messagebox.showerror("Failed", result)
     else:
         messagebox.showinfo("Success", result)
+
+def on_user_stats():
+    username = modify_username_entry.get().strip()
+    if not username:
+        messagebox.showwarning("Missing Field", "Enter username to fetch stats.")
+        return
+    try:
+        disk_usage = subprocess.getoutput(f"sudo du -sh /home/{username}").split()[0]
+        last_login = subprocess.getoutput(f"lastlog -u {username}")
+        messagebox.showinfo("User Stats", f"Disk Usage: {disk_usage}\n\n{last_login}")
+    except Exception as e:
+        messagebox.showerror("Error", str(e))
+
+def search_user():
+    username = search_user_entry.get().strip()
+    if not username:
+        messagebox.showwarning("Missing Field", "Enter a username to search.")
+        return
+    try:
+        with open("/etc/passwd", 'r') as f:
+            matches = [line for line in f if username in line]
+            if matches:
+                messagebox.showinfo("User Found", "".join(matches))
+            else:
+                messagebox.showinfo("No Match", "User not found.")
+    except Exception as e:
+        messagebox.showerror("Error", str(e))
 
 # ------------------ Group Tab Functions ------------------
 
@@ -120,27 +148,49 @@ def on_change_owner():
 
 root = tk.Tk()
 root.title("PermiControl - User, Group & Permission Manager")
-root.geometry("600x500")
+root.geometry("600x600")
 
-tab_control = ttk.Notebook(root)
+def toggle_dark_mode():
+    bg = "#2e2e2e" if root["bg"] != "#2e2e2e" else "SystemButtonFace"
+    fg = "white" if bg == "#2e2e2e" else "black"
+    root.configure(bg=bg)
+    for child in root.winfo_children():
+        try:
+            child.configure(bg=bg, fg=fg)
+        except:
+            pass
+
+dark_mode_button = tk.Button(root, text="🌗 Toggle Dark Mode", command=toggle_dark_mode)
+dark_mode_button.pack(pady=5)
+
+tab_control = Notebook(root)
 
 # -- User Management Tab --
-tab_user = ttk.Frame(tab_control)
+tab_user = Frame(tab_control)
 tab_control.add(tab_user, text="User Management")
 
-tk.Label(tab_user, text="Add User").pack(pady=(10,0))
+# Search User Widgets
+tk.Label(tab_user, text="Search User").pack(pady=(10, 0))
+search_user_entry = tk.Entry(tab_user)
+search_user_entry.pack()
+tk.Button(tab_user, text="Search", command=search_user).pack(pady=5)
+
+# Add User Widgets
+tk.Label(tab_user, text="Add User").pack(pady=(10, 0))
 tk.Label(tab_user, text="Username").pack()
 add_username_entry = tk.Entry(tab_user)
 add_username_entry.pack()
 tk.Button(tab_user, text="Add User", command=on_add_user).pack(pady=5)
 
-tk.Label(tab_user, text="Delete User").pack(pady=(20,0))
+# Delete User Widgets
+tk.Label(tab_user, text="Delete User").pack(pady=(20, 0))
 tk.Label(tab_user, text="Username").pack()
 delete_username_entry = tk.Entry(tab_user)
 delete_username_entry.pack()
 tk.Button(tab_user, text="Delete User", command=on_delete_user).pack(pady=5)
 
-tk.Label(tab_user, text="Modify User").pack(pady=(20,0))
+# Modify User Widgets
+tk.Label(tab_user, text="Modify User").pack(pady=(20, 0))
 tk.Label(tab_user, text="Username").pack()
 modify_username_entry = tk.Entry(tab_user)
 modify_username_entry.pack()
@@ -157,23 +207,26 @@ modify_value_entry.pack()
 
 tk.Button(tab_user, text="Modify User", command=on_modify_user).pack(pady=5)
 
+# User Stats Button
+tk.Button(tab_user, text="Show User Stats", command=on_user_stats).pack(pady=5)
+
 # -- Group Management Tab --
-tab_group = ttk.Frame(tab_control)
+tab_group = Frame(tab_control)
 tab_control.add(tab_group, text="Group Management")
 
-tk.Label(tab_group, text="Create Group").pack(pady=(10,0))
+tk.Label(tab_group, text="Create Group").pack(pady=(10, 0))
 tk.Label(tab_group, text="Group Name").pack()
 create_group_entry = tk.Entry(tab_group)
 create_group_entry.pack()
 tk.Button(tab_group, text="Create Group", command=on_create_group).pack(pady=5)
 
-tk.Label(tab_group, text="Delete Group").pack(pady=(20,0))
+tk.Label(tab_group, text="Delete Group").pack(pady=(20, 0))
 tk.Label(tab_group, text="Group Name").pack()
 delete_group_entry = tk.Entry(tab_group)
 delete_group_entry.pack()
 tk.Button(tab_group, text="Delete Group", command=on_delete_group).pack(pady=5)
 
-tk.Label(tab_group, text="Add User to Group").pack(pady=(20,0))
+tk.Label(tab_group, text="Add User to Group").pack(pady=(20, 0))
 tk.Label(tab_group, text="Username").pack()
 add_user_group_username_entry = tk.Entry(tab_group)
 add_user_group_username_entry.pack()
@@ -183,10 +236,10 @@ add_user_group_group_entry.pack()
 tk.Button(tab_group, text="Add User to Group", command=on_add_user_to_group).pack(pady=5)
 
 # -- Permission Management Tab --
-tab_perm = ttk.Frame(tab_control)
+tab_perm = Frame(tab_control)
 tab_control.add(tab_perm, text="Permission Management")
 
-tk.Label(tab_perm, text="Change Permissions").pack(pady=(10,0))
+tk.Label(tab_perm, text="Change Permissions").pack(pady=(10, 0))
 tk.Label(tab_perm, text="File/Directory Path").pack()
 perm_path_entry = tk.Entry(tab_perm, width=50)
 perm_path_entry.pack()
@@ -195,7 +248,7 @@ perm_mode_entry = tk.Entry(tab_perm)
 perm_mode_entry.pack()
 tk.Button(tab_perm, text="Change Permissions", command=on_change_permissions).pack(pady=5)
 
-tk.Label(tab_perm, text="Change Owner").pack(pady=(20,0))
+tk.Label(tab_perm, text="Change Owner").pack(pady=(20, 0))
 tk.Label(tab_perm, text="File/Directory Path").pack()
 owner_path_entry = tk.Entry(tab_perm, width=50)
 owner_path_entry.pack()
