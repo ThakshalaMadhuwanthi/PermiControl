@@ -5,14 +5,15 @@ import pwd
 from utils.logger import setup_logging
 
 setup_logging()
+logger = logging.getLogger(__name__)
 
 def add_user(username):
     try:
         subprocess.run(['sudo', 'useradd', username], check=True)
-        logging.info(f"User '{username}' added successfully.")
+        logger.info(f"User '{username}' added successfully.")
         return f"User '{username}' added successfully."
     except subprocess.CalledProcessError as e:
-        logging.error(f"Failed to add user '{username}': {e}")
+        logger.error(f"Failed to add user '{username}': {e}")
         return f"Failed to add user '{username}': {e}"
 
 def delete_user(username):
@@ -20,16 +21,16 @@ def delete_user(username):
         pwd.getpwnam(username)  # Check if user exists
     except KeyError:
         return f"User '{username}' does not exist."
-
+    
     try:
         subprocess.run(['sudo', 'userdel', '-r', username], check=True)
-        logging.info(f"User '{username}' deleted successfully.")
+        logger.info(f"User '{username}' deleted successfully.")
         return f"User '{username}' deleted successfully."
     except subprocess.CalledProcessError as e:
-        logging.error(f"Failed to delete user '{username}': {e}")
+        logger.error(f"Failed to delete user '{username}': {e}")
         return f"Failed to delete user '{username}': {e}"
 
-VALID_OPTIONS = ['-l', '-d', '-s', '-c', '-u', '-g']  # Extend as needed
+VALID_OPTIONS = ['-l', '-d', '-s', '-c', '-u', '-g']  # Common usermod options
 
 def modify_user(username, option, value):
     if option not in VALID_OPTIONS:
